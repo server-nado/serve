@@ -17,13 +17,24 @@ type dataItem struct {
 	val interface{}
 }
 
-func NewSignInData(m map[string]interface{}) signInData {
-	ms := make(signInData, 0, len(m))
+func NewSignInData(m interface{}) signInData {
 
-	for k, v := range m {
-		ms = append(ms, dataItem{k, v})
+	switch m.(type) {
+	case map[string]interface{}:
+		ms := make(signInData, 0, len(m.(map[string]interface{})))
+		for k, v := range m.(map[string]interface{}) {
+			ms = append(ms, dataItem{k, v})
+		}
+		return ms
+	default:
+		typ := reflect.TypeOf(m).Elem()
+		val := reflect.ValueOf(m).Elem()
+		ms := make(signInData, 0, val.NumField())
+		for i := 0; i < val.NumField(); i++ {
+			ms = append(ms, dataItem{typ.Field(i).Tag.Get("json"), val.Field(i).Interface()})
+		}
+		return ms
 	}
-	return ms
 }
 
 // 用来生成sign
@@ -182,9 +193,19 @@ func (self *HttpRequest) Marshal(info interface{}) (err error) {
 	self.Lock()
 	defer self.Unlock()
 
-	md := NewSignInData(info.(map[string]interface{}))
+	md := NewSignInData(info)
+	switch info.(type) {
+	case map[string]interface{}:
+		info.(map[string]interface{})["sign"] = md.GetSign(self.AppSecret)
+	default:
+		val := reflect.ValueOf(info).Elem()
+		typ := reflect.TypeOf(info).Elem()
+		if _, ok := typ.FieldByName("Sign"); ok {
+			//val.FieldByName("Sign").SetString(md.GetSign(self.AppSecret))
+			val.FieldByName("Sign").SetString(md.GetSign(self.AppSecret))
+		}
 
-	info.(map[string]interface{})["sign"] = md.GetSign(self.AppSecret)
+	}
 	self.b, err = json.Marshal(info)
 	return
 }
