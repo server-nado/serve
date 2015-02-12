@@ -4,11 +4,11 @@ import (
 	"log"
 	"os"
 	"sync"
-	"time"
 
 	. "github.com/ablegao/serve-nado/lib"
 )
 
+var RouterToConsumer Header
 var WriteToServer = make(chan RequestResponse)
 var Stop = make(chan bool)
 var (
@@ -75,13 +75,4 @@ func (self *NadoServer) HandFunc(typ uint16, fun Header) {
 	self.Lock()
 	defer self.Unlock()
 	self.headers[typ] = fun
-}
-
-func (self NadoServer) SendToUid(uid uint64, r Request) {
-	if c, ok := self.Routes[uid]; ok {
-		select {
-		case c <- r.Byte():
-		case <-time.After(self.config.MessageTimeout):
-		}
-	}
 }

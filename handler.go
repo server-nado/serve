@@ -3,6 +3,7 @@ package nado
 import (
 	"time"
 
+	"github.com/ablegao/go-nsq"
 	. "github.com/ablegao/serve-nado/lib"
 )
 
@@ -26,6 +27,23 @@ func NewConfig() *Configure {
 		defer w.Close()
 		return
 	}
+
+	Config.NsqDefaultHandle = func(w ResponseWrite, r Request) {
+		defer w.Close()
+		return
+	}
+
+	Config.NsqProducterTopic = ""
+	Config.NsqConsumerTopic = ""
+	Config.NsqChannel = "default"
+	Config.NsqConfig = nsq.NewConfig()
+	Config.NsqMaxConsumer = 1
+	Config.NsqdLookupds = nil
+	Config.NsqdAddress = ""
+	Config.OnConnectStop = func(w ResponseWrite, r Request) {
+
+	}
+
 	return Config
 }
 func NewServer(conf *Configure) {

@@ -2,6 +2,8 @@ package lib
 
 import (
 	"time"
+
+	"github.com/ablegao/go-nsq"
 )
 
 type Header func(w ResponseWrite, r Request)
@@ -11,12 +13,6 @@ type Message interface {
 	ByteBody() []byte
 }
 
-type Handler interface {
-	ServeMessage(message Message) error
-	HandFunc(typ uint16, fun Header)
-	DefaultHandle(w ResponseWrite, r Request)
-	SetHeaders(Headers)
-}
 type RequestResponse struct {
 	Res ResponseWrite
 	Req Request
@@ -28,6 +24,24 @@ type Request interface {
 	Unmarshal(interface{}) error
 	Marshal(interface{}) error
 	Byte() []byte
+	BaseByte() []byte
+	GetId() uint64
+	SetType(uint16)
+	//Finish() //表示消息处理完毕。
+}
+
+type RequestByNsq interface {
+	Reset()
+	Type() uint16
+	Unmarshal(interface{}) error
+	Marshal(interface{}) error
+	Byte() []byte
+	BaseByte() []byte
+	GetId() uint64
+	GetRoute() string
+	SetRoute(string)
+	SetId(uint64)
+
 	//Finish() //表示消息处理完毕。
 }
 
@@ -41,9 +55,21 @@ type Configure struct {
 	WebsocketHandlerUrl string
 	DataVerify          DataVerifyType
 	NadoDefaultHandle   Header
-	MessageTimeout      time.Duration
-	AppKey              string
-	AppSecret           string
+
+	MessageTimeout time.Duration
+	AppKey         string
+	AppSecret      string
+
+	NsqConsumerTopic  string
+	NsqProducterTopic string
+	NsqChannel        string
+	NsqDefaultHandle  Header
+	NsqMaxConsumer    int
+	NsqdLookupds      []string
+	NsqdAddress       string
+	NsqConfig         *nsq.Config
+
+	OnConnectStop func(w ResponseWrite, r Request) //当链接中断时的回调函数
 }
 
 //用来验证数据有效性的借口
