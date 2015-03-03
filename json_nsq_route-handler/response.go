@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"sync"
 
+	. "github.com/ablegao/serve-nado/lib"
+
 	"github.com/ablegao/go-nsq"
 )
 
@@ -34,6 +36,17 @@ func (self *JsonRequest) Marshal(data interface{}) (err error) {
 	self.Lock()
 	defer self.Unlock()
 	self.b, err = json.Marshal(data)
+
+	if err != nil {
+		return
+	}
+	info := struct {
+		Code uint16 `json:"code"`
+	}{}
+
+	err = json.Unmarshal(self.b, &info)
+	self.Typ = info.Code
+
 	return err
 }
 func (self *JsonRequest) GetId() uint64 {
@@ -67,7 +80,9 @@ func (self *JsonRequest) BaseByte() []byte {
 func (self *JsonRequest) Reset() {
 
 }
-
+func (self JsonRequest) Copy() RequestByNsq {
+	return &self
+}
 func (self *JsonRequest) UnmarshalData(data []byte) (err error) {
 	self.RLock()
 	defer self.RUnlock()
@@ -92,14 +107,30 @@ func (self *JsonRequest) UnmarshalData(data []byte) (err error) {
 	return
 }
 
+func (self *JsonRequest) GetRoute() string {
+	self.RLock()
+	defer self.RUnlock()
+	return self.RouteName
+}
+func (self *JsonRequest) SetId(id uint64) {
+	self.Lock()
+	defer self.Unlock()
+	self.Id = id
+}
+func (self *JsonRequest) SetRoute(name string) {
+	self.Lock()
+	defer self.Unlock()
+	self.RouteName = name
+}
+
 type JsonResponseWrite struct {
 	RouteName string
-	producer  *nsq.Producer
+	Producer  *nsq.Producer
 	Id        uint64
 }
 
 func (self *JsonResponseWrite) Write(body []byte) (err error) {
-	self.producer.Publish(self.RouteName, body)
+	self.Producer.Publish(self.RouteName, body)
 	return
 }
 
@@ -107,16 +138,17 @@ func (self *JsonResponseWrite) Write(body []byte) (err error) {
 重点用在nsq 向route 发送数据时。
 */
 func (self *JsonResponseWrite) Close() (err error) {
-	w := bytes.NewBuffer(nil)
-	binary.Write(w, binary.BigEndian, self.Id)
-	binary.Write(w, binary.BigEndian, uint16(len(self.RouteName)))
-	//binary.Write(w, binary.BigEndian, self.RouteName)
-	w.Write([]byte(self.RouteName))
-	binary.Write(w, binary.BigEndian, uint16(1))
-	binary.Write(w, binary.BigEndian, uint16(0))
-	//w.Write([]byte{0})
-	Debug.Println(w.Bytes())
-	self.producer.Publish(self.RouteName, w.Bytes())
-
+	/*
+		w := bytes.NewBuffer(nil)
+		binary.Write(w, binary.BigEndian, self.Id)
+		binary.Write(w, binary.BigEndian, uint16(len(self.RouteName)))
+		//binary.Write(w, binary.BigEndian, self.RouteName)
+		w.Write([]byte(self.RouteName))
+		binary.Write(w, binary.BigEndian, uint16(1))
+		binary.Write(w, binary.BigEndian, uint16(0))
+		//w.Write([]byte{0})
+		//Debug.Println(w.Bytes())
+		self.Producer.Publish(self.RouteName, w.Bytes())
+	*/
 	return
 }

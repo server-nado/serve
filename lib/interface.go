@@ -41,7 +41,7 @@ type RequestByNsq interface {
 	GetRoute() string
 	SetRoute(string)
 	SetId(uint64)
-
+	Copy() RequestByNsq
 	//Finish() //表示消息处理完毕。
 }
 
@@ -49,26 +49,32 @@ type ResponseWrite interface {
 	Write([]byte) error
 	Close() error
 }
-
+type ResponseWriteByNsq interface {
+	Write([]byte) error
+	Close() error
+	Copy() ResponseWriteByNsq
+}
 type Configure struct {
-	HttpHandleUrl       string
-	WebsocketHandlerUrl string
+	HttpHandleUrl       string `json:"HttpHandleUrl"`
+	WebsocketHandlerUrl string `json:"WebsocketHandlerUrl"`
 	DataVerify          DataVerifyType
 	NadoDefaultHandle   Header
 
-	MessageTimeout time.Duration
-	AppKey         string
-	AppSecret      string
+	MessageTimeout time.Duration `json:"MessageTimeout,timeunit:s"`
+	AppKey         string        `json:"AppKey"`
+	AppSecret      string        `json:"AppSecret"`
 
-	NsqConsumerTopic  string
-	NsqProducterTopic string
-	NsqChannel        string
+	NsqConsumerTopic  string `json:"NsqConsumerTopic"`
+	NsqProducterTopic string `json:"NsqProducterTopic"`
+	NsqChannel        string `json:"NsqChannel"`
 	NsqDefaultHandle  Header
-	NsqMaxConsumer    int
-	NsqdLookupds      []string
-	NsqdAddress       string
+	NsqMaxConsumer    int      `json:"NsqMaxConsumer"`
+	NsqdLookupds      []string `json:"NsqdLookupds"`
+	NsqdAddress       string   `json:"NsqdAddress"`
 	NsqConfig         *nsq.Config
 
+	OnServeStop   func()
+	OnServeStart  func()
 	OnConnectStop func(w ResponseWrite, r Request) //当链接中断时的回调函数
 }
 
@@ -77,4 +83,5 @@ type DataVerifyType func([]byte) error
 
 type ServeHandle interface {
 	Run(conf *Configure) error
+	Stop()
 }

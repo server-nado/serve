@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"sync"
 
+	. "github.com/ablegao/serve-nado/lib"
+
 	"github.com/ablegao/go-nsq"
 )
 
@@ -34,6 +36,16 @@ func (self *JsonRequest) Marshal(data interface{}) (err error) {
 	self.Lock()
 	defer self.Unlock()
 	self.b, err = json.Marshal(data)
+	if err!=nil {
+		return 
+	}
+	info:= struct{
+		Code uint16 `json:"code"`
+	}{}
+	
+	err = json.Unmarshal(self.b , &info)
+	self.Typ = info.Code
+	
 	return err
 }
 func (self *JsonRequest) GetId() uint64 {
@@ -67,6 +79,10 @@ func (self *JsonRequest) BaseByte() []byte {
 }
 func (self *JsonRequest) Reset() {
 
+}
+func (self JsonRequest) Copy() RequestByNsq {
+
+	return &self
 }
 
 func (self *JsonRequest) UnmarshalData(data []byte) (err error) {
@@ -114,7 +130,7 @@ func (self *JsonRequest) GetRoute() string {
 type JsonResponseWrite struct {
 	sync.RWMutex
 	RouteName string
-	producer  *nsq.Producer
+	Producer  *nsq.Producer
 	Id        uint64
 }
 
@@ -136,7 +152,8 @@ func (self *JsonResponseWrite) Write(body []byte) (err error) {
 	self.RouteName = string(buf.Next(int(n)))
 
 	buf.Reset()
-	self.producer.Publish(self.RouteName, body)
+	Debug.Println(self.RouteName)
+	self.Producer.Publish(self.RouteName, body)
 	return
 }
 
@@ -154,6 +171,10 @@ func (self *JsonResponseWrite) Close() (err error) {
 	binary.Write(w, binary.BigEndian, uint16(1))
 	binary.Write(w, binary.BigEndian, uint16(0))
 	//w.Write([]byte{0})
-	self.producer.Publish(self.RouteName, w.Bytes())
+	self.Producer.Publish(self.RouteName, w.Bytes())
 	return
+}
+
+func (self JsonResponseWrite) Copy() ResponseWriteByNsq {
+	return &self
 }

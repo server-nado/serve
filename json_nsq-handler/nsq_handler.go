@@ -12,15 +12,17 @@ import (
 )
 
 var (
-	Error      = log.New(os.Stderr, "ERROR ", log.Lshortfile|log.LstdFlags)
-	Debug      = log.New(os.Stderr, "DEBUG ", log.Lshortfile|log.LstdFlags)
-	writeToTop = make(chan []byte)
+	Error            = log.New(os.Stderr, "ERROR ", log.Lshortfile|log.LstdFlags)
+	Debug            = log.New(os.Stderr, "DEBUG ", log.Lshortfile|log.LstdFlags)
+	writeToTop       = make(chan []byte)
+	NewReaderHandler *ReaderHandler
 )
 
 func init() {
-	handler := new(ReaderHandler)
-	nado.RouterToConsumer = handler.routerToNsq
-	nado.AddServerHandle(handler)
+	NewReaderHandler = new(ReaderHandler)
+	nado.RouterToConsumer = NewReaderHandler.routerToNsq
+	nado.AddServerHandle(NewReaderHandler)
+	log.Println("=======  import test ")
 }
 
 type NsqReaderHandler struct {
@@ -38,7 +40,7 @@ func (self *NsqReaderHandler) HandleMessage(message *nsq.Message) error {
 		w := new(JsonResponseWrite)
 		w.RouteName = r.RouteName
 		w.Id = r.Id
-		w.producer = self.Producer
+		w.Producer = self.Producer
 		//self.conf.NsqDefaultHandle(&w, &r)
 		//Debug.Println(r.RouteName)
 		nado.WriteToServer <- RequestResponse{Req: r, Res: w}
@@ -51,12 +53,12 @@ func (self *NsqReaderHandler) HandleMessage(message *nsq.Message) error {
 
 type ReaderHandler struct {
 	conf     *Configure
-	consumer *nsq.Consumer
+	Consumer *nsq.Consumer
 	Producer *nsq.Producer
 }
 
 func (self *ReaderHandler) Stop() {
-	self.consumer.Stop()
+	self.Consumer.Stop()
 	self.Producer.Stop()
 }
 func (self *ReaderHandler) Run(conf *Configure) error {
@@ -69,13 +71,13 @@ func (self *ReaderHandler) Run(conf *Configure) error {
 		panic(err)
 	}
 	self.Producer = handler.Producer
-	self.consumer, err = nsq.NewConsumer(conf.NsqConsumerTopic, conf.NsqChannel, conf.NsqConfig)
+	self.Consumer, err = nsq.NewConsumer(conf.NsqConsumerTopic, conf.NsqChannel, conf.NsqConfig)
 	if err != nil {
 		panic(err)
 	}
 
-	self.consumer.AddConcurrentHandlers(handler, conf.NsqMaxConsumer)
-	err = self.consumer.ConnectToNSQLookupds(conf.NsqdLookupds)
+	self.Consumer.AddConcurrentHandlers(handler, conf.NsqMaxConsumer)
+	err = self.Consumer.ConnectToNSQLookupds(conf.NsqdLookupds)
 	if err != nil {
 		panic(err)
 	}

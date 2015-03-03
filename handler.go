@@ -1,7 +1,9 @@
 package nado
 
 import (
-	"time"
+	"encoding/json"
+	"io/ioutil"
+	"os"
 
 	"github.com/ablegao/go-nsq"
 	. "github.com/ablegao/serve-nado/lib"
@@ -15,11 +17,41 @@ var DefaultServer *NadoServer
 func init() {
 }
 
-func NewConfig() *Configure {
+func NewConfig(jsonFile string) *Configure {
 	Config := new(Configure)
-	Config.HttpHandleUrl = "/w"
-	Config.WebsocketHandlerUrl = "/s"
-	Config.MessageTimeout = time.Second * 30
+	if jsonFile == "" {
+
+		Config.HttpHandleUrl = "/w"
+		Config.WebsocketHandlerUrl = "/s"
+
+		Config.NsqProducterTopic = ""
+		Config.NsqConsumerTopic = ""
+		Config.NsqChannel = "default"
+
+		Config.NsqMaxConsumer = 1
+		Config.NsqdLookupds = nil
+		Config.NsqdAddress = ""
+
+	} else {
+		file, err := os.OpenFile(jsonFile, os.O_RDONLY, 0660)
+		if err != nil {
+			panic(err)
+		}
+		defer file.Close()
+		b, err := ioutil.ReadAll(file)
+		if err != nil {
+			panic(err)
+		}
+
+		err = json.Unmarshal(b, Config)
+		if err != nil {
+			panic(err)
+		}
+
+	}
+	Config.NsqConfig = nsq.NewConfig()
+	Config.OnConnectStop = func(w ResponseWrite, r Request) {
+	}
 	Config.DataVerify = func(b []byte) error {
 		return nil
 	}
@@ -32,18 +64,10 @@ func NewConfig() *Configure {
 		defer w.Close()
 		return
 	}
-
-	Config.NsqProducterTopic = ""
-	Config.NsqConsumerTopic = ""
-	Config.NsqChannel = "default"
-	Config.NsqConfig = nsq.NewConfig()
-	Config.NsqMaxConsumer = 1
-	Config.NsqdLookupds = nil
-	Config.NsqdAddress = ""
-	Config.OnConnectStop = func(w ResponseWrite, r Request) {
+	Config.OnServeStop = func() {
 
 	}
-
+	Config.OnServeStart = func() {}
 	return Config
 }
 func NewServer(conf *Configure) {
@@ -63,6 +87,12 @@ func HandFunc(typ uint16, fun Header) {
 	}
 	DefaultServer.HandFunc(typ, fun)
 
+}
+func RunHand(w ResponseWrite, r Request, fun Header) {
+	if DefaultServer == nil {
+		DefaultServer = new(NadoServer)
+	}
+	DefaultServer.RunHandler(w, r, fun)
 }
 
 func ServerListen() {
