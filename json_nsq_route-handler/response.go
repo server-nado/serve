@@ -6,9 +6,9 @@ import (
 	"encoding/json"
 	"sync"
 
-	. "github.com/ablegao/serve-nado/lib"
+	. "github.com/server-nado/serve/lib"
 
-	"github.com/ablegao/go-nsq"
+	"github.com/server-nado/go-nsq"
 )
 
 //用来预处理nsq 发过来的数据

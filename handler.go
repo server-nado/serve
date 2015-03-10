@@ -1,12 +1,12 @@
-package nado
+package serve
 
 import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
 
-	"github.com/ablegao/go-nsq"
-	. "github.com/ablegao/serve-nado/lib"
+	"github.com/server-nado/go-nsq"
+	. "github.com/server-nado/serve/lib"
 )
 
 /***
@@ -23,7 +23,8 @@ func NewConfig(jsonFile string) *Configure {
 
 		Config.HttpHandleUrl = "/w"
 		Config.WebsocketHandlerUrl = "/s"
-
+		Config.Host = ":8080"
+		Config.Fastcgi = ""
 		Config.NsqProducterTopic = ""
 		Config.NsqConsumerTopic = ""
 		Config.NsqChannel = "default"
@@ -68,6 +69,13 @@ func NewConfig(jsonFile string) *Configure {
 
 	}
 	Config.OnServeStart = func() {}
+
+	if Config.Databases == nil {
+		Config.Databases = [][3]string{}
+	}
+	if Config.RedisAddress == nil {
+		Config.RedisAddress = []string{"127.0.0.1:6379"}
+	}
 	return Config
 }
 func NewServer(conf *Configure) {

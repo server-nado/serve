@@ -8,8 +8,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/ablegao/serve-nado"
-	. "github.com/ablegao/serve-nado/lib"
+	nado "github.com/server-nado/serve"
+	. "github.com/server-nado/serve/lib"
 )
 
 var (

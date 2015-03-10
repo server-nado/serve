@@ -6,9 +6,9 @@ import (
 	"encoding/json"
 	"sync"
 
-	. "github.com/ablegao/serve-nado/lib"
+	. "github.com/server-nado/serve/lib"
 
-	"github.com/ablegao/go-nsq"
+	"github.com/server-nado/go-nsq"
 )
 
 //用来预处理nsq 发过来的数据
@@ -36,16 +36,16 @@ func (self *JsonRequest) Marshal(data interface{}) (err error) {
 	self.Lock()
 	defer self.Unlock()
 	self.b, err = json.Marshal(data)
-	if err!=nil {
-		return 
+	if err != nil {
+		return
 	}
-	info:= struct{
+	info := struct {
 		Code uint16 `json:"code"`
 	}{}
-	
-	err = json.Unmarshal(self.b , &info)
+
+	err = json.Unmarshal(self.b, &info)
 	self.Typ = info.Code
-	
+
 	return err
 }
 func (self *JsonRequest) GetId() uint64 {

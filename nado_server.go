@@ -1,4 +1,4 @@
-package nado
+package serve
 
 import (
 	"log"
@@ -8,7 +8,7 @@ import (
 	"syscall"
 	"time"
 
-	. "github.com/ablegao/serve-nado/lib"
+	. "github.com/server-nado/serve/lib"
 )
 
 var RouterToConsumer Header

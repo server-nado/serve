@@ -3,7 +3,7 @@ package lib
 import (
 	"time"
 
-	"github.com/ablegao/go-nsq"
+	"github.com/server-nado/go-nsq"
 )
 
 type Header func(w ResponseWrite, r Request)
@@ -57,6 +57,8 @@ type ResponseWriteByNsq interface {
 type Configure struct {
 	HttpHandleUrl       string `json:"HttpHandleUrl"`
 	WebsocketHandlerUrl string `json:"WebsocketHandlerUrl"`
+	Host                string `json:"Host"`
+	Fastcgi             string `json:"Fastcgi"`
 	DataVerify          DataVerifyType
 	NadoDefaultHandle   Header
 
@@ -72,6 +74,10 @@ type Configure struct {
 	NsqdLookupds      []string `json:"NsqdLookupds"`
 	NsqdAddress       string   `json:"NsqdAddress"`
 	NsqConfig         *nsq.Config
+
+	RedisDb      int         `json:"RedisDB"`
+	RedisAddress []string    `json:"RedisAddress"`
+	Databases    [][3]string `json:"Databases"`
 
 	OnServeStop   func()
 	OnServeStart  func()
