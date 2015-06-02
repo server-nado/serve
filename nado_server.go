@@ -29,7 +29,7 @@ type NadoServer struct {
 	headers     Headers
 	defaultHead Header
 	serve       []ServeHandle
-	config      *Configure
+	config      Configure
 	AddRoute    chan *UserRoute
 	DelRoute    chan uint64
 	Routes      map[uint64]chan []byte
@@ -46,7 +46,11 @@ func (self *NadoServer) Run() {
 	}
 
 	time.Sleep(time.Second * 2)
-	go self.config.OnServeStart()
+	//go self.config.OnServeStart()
+	if fun, ok := self.config["OnServeStart"]; ok {
+		//go fun.(	func() ).func()
+		go fun.(func())()
+	}
 	go func() {
 		for {
 			select {
@@ -63,12 +67,14 @@ func (self *NadoServer) Run() {
 				if fun, ok = self.headers[r.Req.Type()]; ok {
 					go fun(r.Res, r.Req)
 				} else {
-					go self.config.NadoDefaultHandle(r.Res, r.Req)
+					//go self.config.NadoDefaultHandle(r.Res, r.Req)
+					if fun, ok := self.config["NadoDefaultHandle"]; ok {
+						go fun.(Header)(r.Res, r.Req)
+					}
 				}
 				self.RUnlock()
 
 			case <-Stop:
-
 				Debug.Println("stop ..... ")
 				return
 			}
@@ -78,9 +84,11 @@ func (self *NadoServer) Run() {
 	//
 	signal.Notify(ch, syscall.SIGSTOP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT, syscall.SIGUSR1, syscall.SIGUSR2, syscall.SIGHUP, syscall.SIGKILL)
 
-	sig := <-ch
-	Debug.Println("====== ", sig)
-	self.config.OnServeStop()
+	<-ch
+	//self.config.OnServeStop()
+	if fun, ok := self.config["OnServeStop"]; ok {
+		fun.(func())()
+	}
 	for _, serve := range self.serve {
 
 		serve.Stop()

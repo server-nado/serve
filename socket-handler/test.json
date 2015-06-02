@@ -1,0 +1,7 @@
+{
+	"address":":7776",
+	"master_topic":"c01",
+	"consumer_topic":"CODMASTER_CONSUMER",
+	"nsqd_address":"game:4150",
+	"nsq_lookupd":"game:4161" 
+}

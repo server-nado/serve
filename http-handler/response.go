@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"sync"
 
-	. "github.com/ablegao/serve-nado/lib"
+	. "github.com/server-nado/serve/lib"
 )
 
 type HttpResponse struct {

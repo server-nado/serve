@@ -13,7 +13,7 @@ func NewTestRW() (ResponseWrite, Request, chan []byte, chan bool) {
 
 type TestRequest struct {
 	TypeId uint16
-	Id     uint64
+	Id     uint32
 	b      []byte
 	route  string
 }
@@ -36,7 +36,7 @@ func (self *TestRequest) Marshal(info interface{}) (err error) {
 func (self *TestRequest) SetRoute(s string) {
 	self.route = s
 }
-func (self *TestRequest) SetId(id uint64) {
+func (self *TestRequest) SetId(id uint32) {
 	self.Id = id
 }
 func (self *TestRequest) GetRoute() string {
@@ -48,7 +48,7 @@ func (self *TestRequest) Byte() []byte {
 func (self *TestRequest) BaseByte() []byte {
 	return self.b
 }
-func (self *TestRequest) GetId() uint64 {
+func (self *TestRequest) GetId() uint32 {
 	return self.Id
 }
 func (self *TestRequest) SetType(id uint16) {
@@ -60,9 +60,9 @@ type TestResponseWrite struct {
 	w    chan []byte
 }
 
-func (self *TestResponseWrite) Write(b []byte) error {
+func (self *TestResponseWrite) Write(b []byte) (int, error) {
 	self.w <- b
-	return nil
+	return len(b), nil
 }
 
 func (self *TestResponseWrite) Close() error {

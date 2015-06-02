@@ -5,10 +5,16 @@ import (
 	"sync"
 )
 
-var Users = new(UserList)
+var Users *UserList
 
 func init() {
+	Users = NewUsers()
+}
 
+func NewUsers() (u *UserList) {
+	u = new(UserList)
+	u.L = map[interface{}]UserConn{}
+	return
 }
 
 func UserGet(key interface{}) (UserConn, error) {

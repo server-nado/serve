@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"time"
 
-	. "github.com/ablegao/serve-nado/lib"
+	. "github.com/server-nado/serve/lib"
 
-	"github.com/ablegao/serve-nado"
+	nado "github.com/server-nado/serve"
 	"golang.org/x/net/websocket"
 )
 

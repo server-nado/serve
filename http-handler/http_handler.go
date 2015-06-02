@@ -24,6 +24,7 @@ func init() {
 	go getUintId()
 	nado.AddServerHandle(new(HttpServeHandle))
 }
+
 func getUintId() {
 	for {
 		select {
@@ -36,10 +37,10 @@ func getUintId() {
 
 type HttpServeHandle struct {
 	dataVerify DataVerifyType
-	conf       *Configure
+	conf       Configure
 }
 
-func (self *HttpServeHandle) Run(conf *Configure) (err error) {
+func (self *HttpServeHandle) Run(conf Configure) (err error) {
 	Debug.Println("http address  ", conf.HttpHandleUrl)
 	self.dataVerify = conf.DataVerify
 	self.conf = conf
