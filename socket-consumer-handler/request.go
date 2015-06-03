@@ -10,7 +10,6 @@ import (
 	"github.com/server-nado/go-nsq"
 	"github.com/server-nado/serve"
 	. "github.com/server-nado/serve/lib"
-	"golang.org/x/net/websocket"
 )
 
 var ErrHand = errors.New("HEAD ERROR ")
@@ -178,19 +177,7 @@ type RouteResponseWrite struct {
 func (self *RouteResponseWrite) Write(body []byte) (n int, err error) {
 	self.Lock()
 	defer self.Unlock()
-
-	switch self.conn.(type) {
-	case *websocket.Conn:
-		err = websocket.Message.Send(self.conn.(*websocket.Conn), body)
-		if err != nil {
-			n = 0
-		} else {
-			n = len(body)
-		}
-	default:
-		n, err = self.conn.Write(body)
-	}
-
+	self.producer.Publish(self.RouteName, body)
 	return
 }
 

@@ -139,16 +139,16 @@ func (self *NsqHandler) HandleMessage(message *nsq.Message) error {
 	replay := []byte{}
 	r := NsqRouteRequest{}
 
-	err := serve.ReadResponseByConnect(replay, conn, func(replay []byte) bool {
+	serve.ReadResponseByConnect(replay, conn, func(replay []byte) bool {
+		Debug.Println(self.config["on_consumer_to_client"])
 		if fun, ok := self.config["on_consumer_to_client"]; ok {
 			r.UnmarshalData(replay)
 			fun.(func(lib.Request))(&r)
+		} else {
+			Debug.Println("on_consumer_to_client not set :", ok, replay)
 		}
 		return true
 	})
-	if err != nil {
-		Error.Println(err)
-	}
 
 	return nil
 }

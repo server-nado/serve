@@ -37,7 +37,7 @@ func (self *SocketServer) connectNsq() {
 	}
 
 	handler := new(NsqHandler)
-
+	handler.config = self.conf
 	self.consumer, err = nsq.NewConsumer(self.conf["master_topic"].(string), "default", self.conf["nsqConf"].(*nsq.Config))
 	self.consumer.AddConcurrentHandlers(handler, 2048)
 	self.consumer.ConnectToNSQLookupd(self.conf["nsq_lookupd"].(string))

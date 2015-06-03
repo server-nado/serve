@@ -26,7 +26,9 @@ func (self *NsqHandler) HandleMessage(message *nsq.Message) error {
 
 		w := new(RouteResponseWrite)
 		w.producer = self.producer
+
 		r.UnmarshalData(replay)
+		w.RouteName = r.RouteName
 
 		serve.RunHand(w, r, self.config["on_concumer_default_callback"].(lib.Header))
 		return true
