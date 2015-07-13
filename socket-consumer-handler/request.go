@@ -79,7 +79,7 @@ func (self *RouteRequest) Reset() {
 
 }
 
-func (self RouteRequest) Copy() RequestByRoute {
+func (self RouteRequest) Copy() Request {
 
 	return &self
 }

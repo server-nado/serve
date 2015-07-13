@@ -77,9 +77,17 @@ func (self *NsqRouteRequest) BaseByte() []byte {
 func (self *NsqRouteRequest) Reset() {
 
 }
-func (self NsqRouteRequest) Copy() *NsqRouteRequest {
-
+func (self *NsqRouteRequest) GetRoute() string {
+	return self.RouteName
+}
+func (self *NsqRouteRequest) SetRoute(name string) {
+	self.RouteName = name
+}
+func (self NsqRouteRequest) Copy() lib.Request {
 	return &self
+}
+func (self *NsqRouteRequest) SetId(id uint32) {
+	self.Id = id
 }
 
 func (self *NsqRouteRequest) UnmarshalData(data []byte) (err error) {
@@ -140,7 +148,7 @@ func (self *NsqHandler) HandleMessage(message *nsq.Message) error {
 	r := NsqRouteRequest{}
 
 	serve.ReadResponseByConnect(replay, conn, func(replay []byte) bool {
-		Debug.Println(self.config["on_consumer_to_client"])
+		//Debug.Println(self.config["on_consumer_to_client"])
 		if fun, ok := self.config["on_consumer_to_client"]; ok {
 			r.UnmarshalData(replay)
 			fun.(func(lib.Request))(&r)

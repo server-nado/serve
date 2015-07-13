@@ -10,10 +10,25 @@ import (
 )
 
 var (
-	Error = log.New(os.Stderr, "ERROR ", log.Lshortfile|log.LstdFlags)
-	Debug = log.New(os.Stderr, "DEBUG ", log.Lshortfile|log.LstdFlags)
+	Error    = log.New(os.Stderr, "ERROR ", log.Lshortfile|log.LstdFlags)
+	Debug    = log.New(os.Stderr, "DEBUG ", log.Lshortfile|log.LstdFlags)
+	Producer *nsq.Producer
 )
 
+func ShareMessage(getRoute func() (string, error), uid uint32, typ uint16, b []byte) error {
+	r := RouteRequest{}
+
+	if str, err := getRoute(); err == nil {
+		r.RouteName = str
+	} else {
+		return err
+	}
+	r.Id = uid
+	r.Typ = typ
+	r.b = b
+	err := Producer.Publish(r.RouteName, r.Byte())
+	return err
+}
 func init() {
 	serve.AddServerHandle(new(SocketServer))
 }
@@ -31,6 +46,7 @@ func (self *SocketServer) Run(conf Configure) error {
 	if err != nil {
 		return err
 	}
+	Producer = self.producer
 	Debug.Println(self.conf["consumer_topic"].(string))
 	handler := new(NsqHandler)
 	handler.config = self.conf

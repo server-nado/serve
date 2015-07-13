@@ -7,6 +7,8 @@ import (
 	"io"
 	"sync"
 
+	"github.com/server-nado/go-nsq"
+
 	"github.com/server-nado/serve"
 	. "github.com/server-nado/serve/lib"
 	"golang.org/x/net/websocket"
@@ -79,7 +81,7 @@ func (self *RouteRequest) Reset() {
 
 }
 
-func (self RouteRequest) Copy() RequestByRoute {
+func (self RouteRequest) Copy() Request {
 
 	return &self
 }
@@ -159,6 +161,8 @@ type RouteResponseWrite struct {
 	RouteName string
 	conn      io.ReadWriteCloser
 	Id        uint32
+	producer  *nsq.Producer
+	config    Configure
 }
 
 func (self *RouteResponseWrite) Write(body []byte) (n int, err error) {
@@ -176,6 +180,15 @@ func (self *RouteResponseWrite) Write(body []byte) (n int, err error) {
 	default:
 		n, err = self.conn.Write(body)
 	}
+
+	return
+}
+func (self *RouteResponseWrite) WriteToConsumer(body []byte) (n int, err error) {
+	if self.producer == nil {
+		return 0, errors.New("producer")
+	}
+	err = self.producer.Publish(self.config["consumer_topic"].(string), body)
+	n = len(body)
 
 	return
 }

@@ -29,10 +29,12 @@ type NadoServer struct {
 	headers     Headers
 	defaultHead Header
 	serve       []ServeHandle
-	config      Configure
-	AddRoute    chan *UserRoute
-	DelRoute    chan uint64
-	Routes      map[uint64]chan []byte
+	hooks       []func(ResponseWrite, Request) bool
+
+	config   Configure
+	AddRoute chan *UserRoute
+	DelRoute chan uint64
+	Routes   map[uint64]chan []byte
 }
 
 //启动一个通道服务
@@ -107,11 +109,26 @@ func (self *NadoServer) HandFunc(typ uint16, fun Header) {
 	defer self.Unlock()
 	self.headers[typ] = fun
 }
-
+func (self *NadoServer) AddHook(hook func(ResponseWrite, Request) bool) {
+	self.hooks = append(self.hooks, hook)
+}
+func (self *NadoServer) runHooks(w ResponseWrite, r Request) (has_continue bool) {
+	for _, fun := range self.hooks {
+		if false == fun(w, r) {
+			return false
+		}
+	}
+	return true
+}
 func (self *NadoServer) RunHandler(w ResponseWrite, r Request, defaultFun Header) {
 	Debug.Println("RunHandler", r.Type())
 	if fun, ok := self.headers[r.Type()]; ok {
-		go fun(w, r)
+		go func() {
+			if self.runHooks(w, r) {
+				fun(w, r)
+			}
+		}()
+
 	} else {
 		go defaultFun(w, r)
 	}

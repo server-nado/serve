@@ -39,7 +39,7 @@ func (self *SocketServer) connectNsq() {
 	handler := new(NsqHandler)
 	handler.config = self.conf
 	self.consumer, err = nsq.NewConsumer(self.conf["master_topic"].(string), "default", self.conf["nsqConf"].(*nsq.Config))
-	self.consumer.AddConcurrentHandlers(handler, 2048)
+	self.consumer.AddConcurrentHandlers(handler, 3)
 	self.consumer.ConnectToNSQLookupd(self.conf["nsq_lookupd"].(string))
 	self.consumer.SetLogger(Debug, nsq.LogLevelInfo)
 	self.producer.SetLogger(Debug, nsq.LogLevelInfo)
@@ -76,7 +76,6 @@ func (self *SocketServer) readByte(buf []byte, w *RouteResponseWrite, r *RouteRe
 		if route, err := fun.(func(ResponseWrite, Request) (bool, error))(w, r); err == nil {
 			if route {
 				self.producer.Publish(self.conf["consumer_topic"].(string), r.Byte())
-
 			}
 		} else {
 
@@ -119,6 +118,8 @@ func (self SocketServer) sockerRead(conn net.Conn) error {
 	r.conn = conn
 	w := RouteResponseWrite{}
 	w.conn = conn
+	w.config = self.conf
+	w.producer = self.producer
 
 	err = serve.ReadResponseByConnect(replay, conn, func(buf []byte) bool {
 		return self.readByte(buf, &w, &r)
@@ -168,22 +169,25 @@ func (self SocketServer) websocketRead(conn *websocket.Conn) {
 	r.conn = conn
 	w := RouteResponseWrite{}
 	w.conn = conn
-
+	w.producer = self.producer
+	w.config = self.conf
 	//read := bytes.NewBuffer(nil)
 
 	for {
 		err = websocket.Message.Receive(conn, &replay)
 		if err != nil {
+			if fun, ok := self.conf["on_connect_close"]; ok {
+				fun.(func(uid uint32))(r.Id)
+			}
 			Error.Println(err)
 			return
 		}
-		Debug.Println(" message : ", replay)
-		//read.Write(replay)
-		//err = serve.ReadResponseByConnect(replay, read, func(buf []byte) bool {
-		//return self.readByte(buf, &w, &r)
-		//})
-		//read.Reset()
+		Debug.Println(" message : ", len(replay), "byte")
+
 		if ok := self.readByte(replay, &w, &r); !ok {
+			if fun, ok := self.conf["on_connect_close"]; ok {
+				fun.(func(uid uint32))(r.Id)
+			}
 			conn.Close()
 			return
 		}

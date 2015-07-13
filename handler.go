@@ -73,6 +73,12 @@ func ServerListen() {
 	}
 	DefaultServer.Run()
 }
+func AddHook(hook func(ResponseWrite, Request) bool) {
+	if DefaultServer == nil {
+		DefaultServer = new(NadoServer)
+	}
+	DefaultServer.AddHook(hook)
+}
 
 func AddServerHandle(handle ServeHandle) {
 	if DefaultServer == nil {

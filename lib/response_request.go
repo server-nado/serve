@@ -4,11 +4,12 @@ import "encoding/json"
 
 func NewTestRW() (ResponseWrite, Request, chan []byte, chan bool) {
 	w := new(TestResponseWrite)
-	w.stop = make(chan bool)
-	w.w = make(chan []byte)
+	w.Stop = make(chan bool)
+	w.W = make(chan []byte)
+
 	r := new(TestRequest)
 	r.route = "testwrite"
-	return w, r, w.w, w.stop
+	return w, r, w.W, w.Stop
 }
 
 type TestRequest struct {
@@ -54,18 +55,30 @@ func (self *TestRequest) GetId() uint32 {
 func (self *TestRequest) SetType(id uint16) {
 	self.TypeId = id
 }
+func (self TestRequest) Copy() Request {
+	return &self
+}
+
+func NewTestW() (w ResponseWrite, write chan []byte, stop chan bool) {
+	write = make(chan []byte)
+	stop = make(chan bool)
+	w = &TestResponseWrite{stop, write}
+
+	return
+
+}
 
 type TestResponseWrite struct {
-	stop chan bool
-	w    chan []byte
+	Stop chan bool
+	W    chan []byte
 }
 
 func (self *TestResponseWrite) Write(b []byte) (int, error) {
-	self.w <- b
+	self.W <- b
 	return len(b), nil
 }
 
 func (self *TestResponseWrite) Close() error {
-	self.stop <- true
+	self.Stop <- true
 	return nil
 }

@@ -20,7 +20,7 @@ func (self *NsqHandler) HandleMessage(message *nsq.Message) error {
 	conn := bytes.NewBuffer(message.Body)
 
 	replay := []byte{}
-	Debug.Println("a message", message.Body)
+	Debug.Println("a message", len(message.Body))
 	serve.ReadResponseByConnect(replay, conn, func(replay []byte) bool {
 		r := new(RouteRequest)
 
